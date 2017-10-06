@@ -2,13 +2,15 @@ format bank
 
 %crsp = readtable("crsp20042008.csv");
 %crsp = readtable("testData.csv");
-%crsp = readtable("testData_w_mc.csv");
-crsp = readtable("crsp_real_w_datenum.csv");
+crsp = readtable("testData_w_mc.csv");
+%crsp = readtable("crsp_real_w_datenum.csv");
 
 %{
+%}
 crsp.datenum = datenum(num2str(crsp.DateOfObservation), 'yyyymmdd');
 crsp.year = year(crsp.datenum);
 crsp.month = month(crsp.datenum);
+crsp.ret3mo = getRet3mo();
 %}
 
 % get momentum
@@ -90,19 +92,6 @@ for i = 1 : len
 end
 
 % cumulative
-%{
-len = length(momentum.mom);
-momentum.cumulativeRet = zeros(len, 1);
-mom_wo_nan = momentum.mom;
-mom_wo_nan(isnan(momentum.mom)) = 0;
-
-momentum.cumulativeRet(1) = mom_wo_nan(1);
-
-for i = 2:len
-    momentum.cumulativeRet(i) = (1+momentum.cumulativeRet(i-1))*(1+mom_wo_nan(i))-1;
-end
-%}
-
 %{
 momentum.cumulativeRet = getCumulRet(momentum.mom);
 momentum.cumulindex = getCumulRet(momentum.index);

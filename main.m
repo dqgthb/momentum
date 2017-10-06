@@ -10,11 +10,16 @@ crsp = readtable("testData_w_mc.csv");
 crsp.datenum = datenum(num2str(crsp.DateOfObservation), 'yyyymmdd');
 crsp.year = year(crsp.datenum);
 crsp.month = month(crsp.datenum);
-crsp.ret3mo = getRet3mo();
 %}
 
-% get momentum
-crsp = prepareMomentumColumn(crsp);
+% get momentum, prepare rankVariable
+len = length(crsp.PERMNO);
+rankVariable = NaN(len, 1);
+for i=1 : len;
+    rankVariable(i) = getMomentum(crsp.PERMNO(i), crsp.year(i), crsp.month(i), crsp);
+end
+crsp.rankVariable = rankVariable;
+
 %{
 len = length(crsp.PERMNO);
 rankVariable = NaN(len, 1);
@@ -57,7 +62,6 @@ for i = 1 : len
 
     loserCutoff = quantile(investibles.rankVariable, 0.1);
     winnerCutoff = quantile(investibles.rankVariable, 0.9);
-
     winners = investibles(investibles.rankVariable >= winnerCutoff, :);
     losers = investibles(investibles.rankVariable <= loserCutoff, :);
     normals = investibles(investibles.rankVariable < winnerCutoff & investibles.rankVariable > loserCutoff, :);

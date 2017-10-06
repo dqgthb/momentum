@@ -5,32 +5,27 @@ format bank
 crsp = readtable("testData_w_mc.csv");
 %crsp = readtable("crsp_real_w_datenum.csv");
 
-%{
-%}
+disp("progress... reading finished")
+disp(datestr(now, 'HH:MM:SS'));
+
 crsp.datenum = datenum(num2str(crsp.DateOfObservation), 'yyyymmdd');
+disp("progress... datenum num2str done")
+disp(datestr(now, 'HH:MM:SS'));
 crsp.year = year(crsp.datenum);
 crsp.month = month(crsp.datenum);
-%}
+disp("progress... add column year and month done")
+disp(datestr(now, 'HH:MM:SS'));
 
 % get momentum, prepare rankVariable
 len = length(crsp.PERMNO);
-rankVariable = NaN(len, 1);
-for i=1 : len;
+rankVariable = NaN(len,1);
+%{rankVariable = NaN(len, 1);%}
+for i=1 : len
     rankVariable(i) = getMomentum(crsp.PERMNO(i), crsp.year(i), crsp.month(i), crsp);
 end
 crsp.rankVariable = rankVariable;
-
-%{
-len = length(crsp.PERMNO);
-rankVariable = NaN(len, 1);
-for i=1 : len;
-    rankVariable(i) = getMomentum(crsp.PERMNO(i), crsp.year(i), crsp.month(i), crsp);
-end
-crsp.rankVariable = rankVariable;
-%}
-
-
-crsp(1:5,:)
+disp("progress... adding rankVariable:momentum column done")
+disp(datestr(now, 'HH:MM:SS'));
 
 % question 5
 momentum = table(unique(crsp.datenum), 'VariableNames', {'datenum'});
@@ -46,9 +41,12 @@ momentum.index = NaN(len, 1);
 momentum.longonly = NaN(len, 1);
 momentum.mcw = NaN(len,1);
 %}
+%
+disp("progress... creating momenum table done")
+disp(datestr(now, 'HH:MM:SS'));
 
 % PERMNO-weight dictionary
-wdic = table([], [], 'VariableNames', {'weights', 'PERMNO'});
+wdic = table(NaN(1000, 1), NaN(1000,1), 'VariableNames', {'weights', 'PERMNO'});
 
 for i = 1 : len
     this_month = momentum.month(i);
@@ -58,8 +56,7 @@ for i = 1 : len
         & ~isnan(crsp.Returns);
 
     investibles = crsp(isInvestible, :);
-    %investibles = table(crsp.PERMNO(isInvestible), crsp.Returns(isInvestible), crsp.rankVariable(isInvestible), 'VariableNames', {'PERMNO', 'Returns', 'rankVariable'});
-
+   
     loserCutoff = quantile(investibles.rankVariable, 0.1);
     winnerCutoff = quantile(investibles.rankVariable, 0.9);
     winners = investibles(investibles.rankVariable >= winnerCutoff, :);
@@ -95,8 +92,10 @@ for i = 1 : len
 
 end
 
+disp("progress... portfolio weighting done")
+disp(datestr(now, 'HH:MM:SS'));
+
 % cumulative
-%{
 momentum.cumulativeRet = getCumulRet(momentum.mom);
 momentum.cumulindex = getCumulRet(momentum.index);
 momentum.cumulshadow = getCumulRet (momentum.shadow);
@@ -108,6 +107,9 @@ momentum.cumulindex(end);
 momentum.cumulshadow(end);
 momentum.cumullongonly(end);
 ];
+
+disp("progress... getting cumuls done")
+disp(datestr(now, 'HH:MM:SS'));
 
 alphas = ...
 [
@@ -138,4 +140,7 @@ rf_yearly = 0.0422;
 rf_monthly = rf_yearly/12;
 
 sharpes = (means - rf_monthly)./stds;
-%}
+
+
+disp("finished!")
+disp(datestr(now, 'HH:MM:SS'));

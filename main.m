@@ -1,31 +1,55 @@
+disp("start!")
+disp(datestr(now, 'HH:MM:SS'));
+
 format bank
 
-%crsp = readtable("crsp20042008.csv");
-%crsp = readtable("testData.csv");
-crsp = readtable("testData_w_mc.csv");
-%crsp = readtable("crsp_real_w_datenum.csv");
+%if ~exist("crsp_w_momentum.csv")
+if ~exist("crsp_w_mom.mat")
+    %disp("mat file does not exist. Creating one...");
+    crsp = readtable("crsp20042008.csv");
+    %change FirmNumberLimit to 1000!
+    %crsp = readtable("testData.csv");
+    %crsp = readtable("testData_w_mc.csv");
+    %crsp = readtable("crsp_real_w_datenum.csv");
 
-disp("progress... reading finished")
-disp(datestr(now, 'HH:MM:SS'));
+    disp("progress... reading csv done")
+    disp(datestr(now, 'HH:MM:SS'));
 
-crsp.datenum = datenum(num2str(crsp.DateOfObservation), 'yyyymmdd');
-disp("progress... datenum num2str done")
-disp(datestr(now, 'HH:MM:SS'));
-crsp.year = year(crsp.datenum);
-crsp.month = month(crsp.datenum);
-disp("progress... add column year and month done")
-disp(datestr(now, 'HH:MM:SS'));
+    crsp.datenum = datenum(num2str(crsp.DateOfObservation), 'yyyymmdd');
+    disp("progress... datenum num2str done")
+    disp(datestr(now, 'HH:MM:SS'));
+    crsp.year = year(crsp.datenum);
+    crsp.month = month(crsp.datenum);
+    disp("progress... add column year and month done")
+    disp(datestr(now, 'HH:MM:SS'));
 
-% get momentum, prepare rankVariable
-len = length(crsp.PERMNO);
-rankVariable = NaN(len,1);
-%{rankVariable = NaN(len, 1);%}
-for i=1 : len
-    rankVariable(i) = getMomentum(crsp.PERMNO(i), crsp.year(i), crsp.month(i), crsp);
+    % get momentum, prepare rankVariable
+    len = length(crsp.PERMNO);
+    rankVariable = NaN(len,1);
+    %{rankVariable = NaN(len, 1);%}
+    n = 0;
+    for i=1 : len
+        rankVariable(i) = getMomentum(crsp.PERMNO(i), crsp.year(i), crsp.month(i), crsp);
+        
+        % nice progress status code from 
+        % https://stackoverflow.com/questions/8825796/how-to-clear-the-last-line-in-the-command-window
+        msg = sprintf('Processed %d/%d', i, len);
+        fprintf(repmat('\b', 1, n));
+        fprintf(msg);
+        n=numel(msg);
+    end
+    crsp.rankVariable = rankVariable;
+    disp("progress... adding rankVariable:momentum column done");
+    disp(datestr(now, 'HH:MM:SS'));
+    save('dump.mat','crsp') 
+%elseif exist('crsp_w_momentum.csv', 'file')
+elseif exist('crsp_w_mom.mat', 'file')
+    disp("found mat file! opening...");
+    %crsp = readtable('crsp_w_momentum.csv');
+    load('crsp_w_mom.mat', 'crsp');
+    disp("progress... adding rankVariable:momentum column done");
+    disp(datestr(now, 'HH:MM:SS'));
 end
-crsp.rankVariable = rankVariable;
-disp("progress... adding rankVariable:momentum column done")
-disp(datestr(now, 'HH:MM:SS'));
 
 % question 5
 momentum = table(unique(crsp.datenum), 'VariableNames', {'datenum'});
@@ -35,12 +59,12 @@ momentum.year = year(momentum.datenum);
 momentum.mom1 = NaN(len, 1);
 momentum.mom10 = NaN(len, 1);
 momentum.mom = NaN(len, 1);
-%{
 momentum.shadow = NaN(len, 1);
 momentum.index = NaN(len, 1);
 momentum.longonly = NaN(len, 1);
+momentum.momMC = NaN(len,1);
 momentum.mcw = NaN(len,1);
-%}
+
 %
 disp("progress... creating momenum table done")
 disp(datestr(now, 'HH:MM:SS'));
@@ -55,36 +79,42 @@ for i = 1 : len
         & crsp.month == this_month ...
         & ~isnan(crsp.Returns);
 
-    investibles = crsp(isInvestible, :);
-   
+    investibles = crsp(isInvestible,:);
+
+    [sorted_MC, ix] = sort(investibles.marketCap, 'descend');
+    FirmNumberLimit = 3000; % just change this to 1000 or whatever in the actual data
+    MCCutoff = sorted_MC(FirmNumberLimit); % bug alert. If there are less firms than FirmNumberLimit, may crash. We make an assumption that investible firms are always larger than FirmNumberLimit.
+    investibles_MC = investibles(investibles.marketCap >= MCCutoff, :);
+
+    loserCutoff_MC = quantile(investibles_MC.rankVariable, 0.1);
+    winnerCutoff_MC = quantile(investibles_MC.rankVariable, 0.9);
+
+    winners_MC = investibles_MC(investibles_MC.rankVariable >= winnerCutoff_MC, :);
+    losers_MC = investibles_MC(investibles_MC.rankVariable <= loserCutoff_MC, :);
+    normals_MC = investibles_MC(investibles_MC.rankVariable < winnerCutoff_MC & investibles_MC.rankVariable > loserCutoff_MC, :);
+
+    momentum.momMC(i) = mean(winners_MC.Returns) - mean(losers_MC.Returns);
+
+    %{
     loserCutoff = quantile(investibles.rankVariable, 0.1);
     winnerCutoff = quantile(investibles.rankVariable, 0.9);
+
     winners = investibles(investibles.rankVariable >= winnerCutoff, :);
     losers = investibles(investibles.rankVariable <= loserCutoff, :);
     normals = investibles(investibles.rankVariable < winnerCutoff & investibles.rankVariable > loserCutoff, :);
 
     winners.weight = mcWeight(winners);
 
-
     % update weight dic
     %wdic = add_winners_to_weight(winners, wdic);
 
-    % losersrets = crsp.Returns(isInvestible & crsp.rankVariable <= loserCutoff);
-    % winnersrets = crsp.Returns(isInvestible & crsp.rankVariable >= winnerCutoff);
-    % normalsrets = crsp.Returns(isInvestible & crsp.rankVariable < winnerCutoff & crsp.rankVariable > loserCutoff);
-    losersrets = losers.Returns;
-    winnersrets = winners.Returns;
-    normalsrets = normals.Returns;
+    meanwinret = mean(winners.Returns);
+    meanloseret = mean(losers.Returns);
+    meannormret = mean(normals.Returns);
 
-    %momentum.mom10(i) = mean(winnersrets);
-    %momentum.mom10(i) = mean(3monthret(winnersrets);
-    meanwinret = mean(winnersrets);
-    %momentum.mom1(i) = mean(losersrets);
-    meanloseret = mean(losersrets);
-    meannormret = mean(normalsrets);
-
+    momentum.mom10(i) = meanwinret;
+    momentum.mom1(i) = meanloseret;
     momentum.mom(i) = meanwinret - meanloseret;
-    %{
     momentum.index(i) = mean(investibles.Returns);
     momentum.shadow(i) = 2*meanwinret + meannormret;
     momentum.longonly(i) = meanwinret;
@@ -96,6 +126,7 @@ disp("progress... portfolio weighting done")
 disp(datestr(now, 'HH:MM:SS'));
 
 % cumulative
+%{
 momentum.cumulativeRet = getCumulRet(momentum.mom);
 momentum.cumulindex = getCumulRet(momentum.index);
 momentum.cumulshadow = getCumulRet (momentum.shadow);
@@ -140,7 +171,7 @@ rf_yearly = 0.0422;
 rf_monthly = rf_yearly/12;
 
 sharpes = (means - rf_monthly)./stds;
-
+%}
 
 disp("finished!")
 disp(datestr(now, 'HH:MM:SS'));

@@ -13,8 +13,6 @@ else
         disp("dump.mat found. Try renaming it to 'crsp_w_mom.mat' and this will run faster.")
     end
     crsp = readtable("crsp20042008.csv");
-    %crsp = readtable("testData.csv");
-    %crsp = readtable("testData_w_mc.csv");
 
     disp("progress... reading csv done")
     disp(datestr(now, 'HH:MM:SS'));
@@ -95,10 +93,10 @@ disp(datestr(now, 'HH:MM:SS'));
 %wdic = table(NaN(1000, 1), NaN(1000,1), 'VariableNames', {'weights', 'PERMNO'});
 
 for i = 1 : len
-    this_month   = momentum.month(i);
-    this_year    = momentum.year(i);
-    isInvestible = crsp.year == this_year ...
-        & crsp.month == this_month ...
+    thisMonth   = momentum.month(i);
+    thisYear    = momentum.year(i);
+    isInvestible = crsp.year == thisYear ...
+        & crsp.month == thisMonth ...
         & ~isnan(crsp.Returns);
 
     % Prepare tables
@@ -143,12 +141,12 @@ for i = 1 : len
     %%%%% MARKET CAP LIMIT 1000 %%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Same strategies are preformed only with the firms with top 1000 market caps
-    [sorted_MC, ix] = sort(investibles.marketCap, 'descend');
+    [sortedMC, ix] = sort(investibles.marketCap, 'descend');
     firmNumberLimit = 1000;
     if length(investibles.marketCap) < firmNumberLimit
         disp("i = " + i + " : There are less sample firms than the limit.");
     else
-        MCCutoff     = sorted_MC(firmNumberLimit);
+        MCCutoff     = sortedMC(firmNumberLimit);
         investibles  = investibles(investibles.marketCap >= MCCutoff, :);
     end
     % Prepare tables
@@ -259,7 +257,7 @@ portfolioNames = {'EWMom', 'EWLongOnly', 'EWIndex', 'EWShadow', 'VWMom', 'VWLong
 stats.Properties.RowNames = portfolioNames;
 
 % Delete unnecessary variables
-clear i isInvestible ix len this_month this_year winnerCutoff loserCutoff sorted_MC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit riskFree benchMark riskFreeMonthly portfolioNames
+clear i isInvestible ix len thisMonth thisYear winnerCutoff loserCutoff sortedMC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit riskFree benchMark riskFreeMonthly portfolioNames
 
 disp("finished!")
 disp(datestr(now, 'HH:MM:SS'));

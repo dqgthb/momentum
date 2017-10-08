@@ -2,15 +2,15 @@ disp("start!")
 disp(datestr(now, 'HH:MM:SS'));
 
 format bank
-if exist('crsp_w_mom.mat', 'file')
+if exist('crspWithMomentum.mat', 'file')
     disp("found mat file! opening...");
     disp(datestr(now, 'HH:MM:SS'));
-    load('crsp_w_mom.mat', 'crsp');
+    load('crspWithMomentum.mat', 'crsp');
 
 else
     disp("mat file does not exist. Creating one...");
     if exist('dump.mat', 'file')
-        disp("dump.mat found. Try renaming it to 'crsp_w_mom.mat' and this will run faster.")
+        disp("dump.mat found. Try renaming it to 'crspWithMomentum.mat' and this will run faster.")
     end
     crsp = readtable("crsp20042008.csv");
 

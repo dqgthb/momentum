@@ -13,7 +13,6 @@ else
         disp("dump.mat found. Try renaming it to 'crsp_w_mom.mat' and this will run faster.")
     end
     crsp = readtable("crsp20042008.csv");
-    %change FirmNumberLimit to 1000!
     %crsp = readtable("testData.csv");
     %crsp = readtable("testData_w_mc.csv");
 
@@ -70,22 +69,22 @@ momentum.valueWeightedIndex       = NaN(len, 1);
 momentum.valueWeightedShadow      = NaN(len, 1);
 
 % creating a similar table as momentum but only with Top 1000 Market Cap firms
-mc1000                          = table(unique(crsp.datenum), 'VariableNames', {'datenum'});
-len                             = length(mc1000.datenum);
-mc1000.month                    = month(mc1000.datenum);
-mc1000.year                     = year(mc1000.datenum);
-mc1000.mom1                     = NaN(len, 1);
-mc1000.mom10                    = NaN(len, 1);
+momentum1000                          = table(unique(crsp.datenum), 'VariableNames', {'datenum'});
+len                                   = length(momentum1000.datenum);
+momentum1000.month                    = month(momentum1000.datenum);
+momentum1000.year                     = year(momentum1000.datenum);
+momentum1000.mom1                     = NaN(len, 1);
+momentum1000.mom10                    = NaN(len, 1);
 % equal weighted
-mc1000.mom                      = NaN(len, 1);
-mc1000.equalWeightedMomLongOnly = NaN(len, 1);
-mc1000.equalWeightedIndex       = NaN(len, 1);
-mc1000.equalWeightedShadow      = NaN(len, 1);
+momentum1000.mom                      = NaN(len, 1);
+momentum1000.equalWeightedMomLongOnly = NaN(len, 1);
+momentum1000.equalWeightedIndex       = NaN(len, 1);
+momentum1000.equalWeightedShadow      = NaN(len, 1);
 % value weighted
-mc1000.valueWeightedMom         = NaN(len,1);
-mc1000.valueWeightedMomLongOnly = NaN(len,1);
-mc1000.valueWeightedIndex       = NaN(len, 1);
-mc1000.valueWeightedShadow      = NaN(len, 1);
+momentum1000.valueWeightedMom         = NaN(len,1);
+momentum1000.valueWeightedMomLongOnly = NaN(len,1);
+momentum1000.valueWeightedIndex       = NaN(len, 1);
+momentum1000.valueWeightedShadow      = NaN(len, 1);
 
 
 %
@@ -111,17 +110,17 @@ for i = 1 : len
 
     %%%%% Equal Weighted Returns %%%%%
     % EWR stands for Equal Weighted Returns
-    InvestiblesEWR = mean(investibles.Returns);
-    WinnersEWR     = mean(winners.Returns);
-    LosersEWR      = mean(losers.Returns);
+    investiblesEWR = mean(investibles.Returns);
+    winnersEWR     = mean(winners.Returns);
+    losersEWR      = mean(losers.Returns);
 
     % logging for each portfolio strategy
-    momentum.mom10(i)                    = WinnersEWR;
-    momentum.mom1(i)                     = LosersEWR;
-    momentum.mom(i)                      = WinnersEWR - LosersEWR;
-    momentum.equalWeightedMomLongOnly(i) = WinnersEWR;
-    momentum.equalWeightedIndex(i)       = InvestiblesEWR;
-    momentum.equalWeightedShadow(i)      = WinnersEWR + LosersEWR + InvestiblesEWR;
+    momentum.mom10(i)                    = winnersEWR;
+    momentum.mom1(i)                     = losersEWR;
+    momentum.mom(i)                      = winnersEWR - losersEWR;
+    momentum.equalWeightedMomLongOnly(i) = winnersEWR;
+    momentum.equalWeightedIndex(i)       = investiblesEWR;
+    momentum.equalWeightedShadow(i)      = winnersEWR + losersEWR + investiblesEWR;
 
     %%%%% Value Weighted Returns %%%%%
     % use valueWeight function and store the result as additional columns
@@ -145,11 +144,11 @@ for i = 1 : len
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Same strategies are preformed only with the firms with top 1000 market caps
     [sorted_MC, ix] = sort(investibles.marketCap, 'descend');
-    FirmNumberLimit = 1000;
-    if length(investibles.marketCap) < FirmNumberLimit
+    firmNumberLimit = 1000;
+    if length(investibles.marketCap) < firmNumberLimit
         disp("i = " + i + " : There are less sample firms than the limit.");
     else
-        MCCutoff     = sorted_MC(FirmNumberLimit);
+        MCCutoff     = sorted_MC(firmNumberLimit);
         investibles  = investibles(investibles.marketCap >= MCCutoff, :);
     end
     % Prepare tables
@@ -160,17 +159,17 @@ for i = 1 : len
 
     %%%%% Equal Weighted Returns %%%%%
     % EWR stands for Equal Weighted Returns
-    InvestiblesEWR = mean(investibles.Returns);
-    WinnersEWR     = mean(winners.Returns);
-    LosersEWR      = mean(losers.Returns);
+    investiblesEWR = mean(investibles.Returns);
+    winnersEWR     = mean(winners.Returns);
+    losersEWR      = mean(losers.Returns);
 
     % logging for each portfolio strategy
-    mc1000.mom10(i)                    = WinnersEWR;
-    mc1000.mom1(i)                     = LosersEWR;
-    mc1000.mom(i)                      = WinnersEWR - LosersEWR;
-    mc1000.equalWeightedMomLongOnly(i) = WinnersEWR;
-    mc1000.equalWeightedIndex(i)       = InvestiblesEWR;
-    mc1000.equalWeightedShadow(i)      = WinnersEWR + LosersEWR + InvestiblesEWR;
+    momentum1000.mom10(i)                    = winnersEWR;
+    momentum1000.mom1(i)                     = losersEWR;
+    momentum1000.mom(i)                      = winnersEWR - losersEWR;
+    momentum1000.equalWeightedMomLongOnly(i) = winnersEWR;
+    momentum1000.equalWeightedIndex(i)       = investiblesEWR;
+    momentum1000.equalWeightedShadow(i)      = winnersEWR + losersEWR + investiblesEWR;
 
     %%%%% Value Weighted Returns %%%%%
     % use valueWeight function and store the result as additional columns
@@ -184,14 +183,15 @@ for i = 1 : len
     winnersVWR     = sum(winners.valueW     .* winners.Returns);
     losersVWR      = sum(losers.valueW      .* losers.Returns);
 
-    mc1000.valueWeightedMom(i)         = winnersVWR - losersVWR;
-    mc1000.valueWeightedMomLongOnly(i) = winnersVWR;
-    mc1000.valueWeightedIndex(i)       = investiblesVWR;
-    mc1000.valueWeightedShadow(i)      = winnersVWR + losersVWR + investiblesVWR;
+    momentum1000.valueWeightedMom(i)         = winnersVWR - losersVWR;
+    momentum1000.valueWeightedMomLongOnly(i) = winnersVWR;
+    momentum1000.valueWeightedIndex(i)       = investiblesVWR;
+    momentum1000.valueWeightedShadow(i)      = winnersVWR + losersVWR + investiblesVWR;
 end
 
 disp("progress... logging portfolio strategy returns ... done");
 disp(datestr(now, 'HH:MM:SS'));
+
 
 %%%%% Data Analysis part
 
@@ -210,49 +210,56 @@ cumulRets.valueWeightedShadow      = getCumulRet(momentum.valueWeightedShadow   
 cumulRets1000 = table(unique(crsp.datenum), 'VariableNames', {'datenum'});
 cumulRets1000.month = month(cumulRets1000.datenum);
 cumulRets1000.year  = year(cumulRets1000.datenum);
-cumulRets1000.mom                      = getCumulRet(mc1000.mom                     );
-cumulRets1000.equalWeightedMomLongOnly = getCumulRet(mc1000.equalWeightedMomLongOnly);
-cumulRets1000.equalWeightedIndex       = getCumulRet(mc1000.equalWeightedIndex      );
-cumulRets1000.equalWeightedShadow      = getCumulRet(mc1000.equalWeightedShadow     );
-cumulRets1000.valueWeightedMom         = getCumulRet(mc1000.valueWeightedMom        );
-cumulRets1000.valueWeightedMomLongOnly = getCumulRet(mc1000.valueWeightedMomLongOnly);
-cumulRets1000.valueWeightedIndex       = getCumulRet(mc1000.valueWeightedIndex      );
-cumulRets1000.valueWeightedShadow      = getCumulRet(mc1000.valueWeightedShadow     );
+cumulRets1000.mom                      = getCumulRet(momentum1000.mom                     );
+cumulRets1000.equalWeightedMomLongOnly = getCumulRet(momentum1000.equalWeightedMomLongOnly);
+cumulRets1000.equalWeightedIndex       = getCumulRet(momentum1000.equalWeightedIndex      );
+cumulRets1000.equalWeightedShadow      = getCumulRet(momentum1000.equalWeightedShadow     );
+cumulRets1000.valueWeightedMom         = getCumulRet(momentum1000.valueWeightedMom        );
+cumulRets1000.valueWeightedMomLongOnly = getCumulRet(momentum1000.valueWeightedMomLongOnly);
+cumulRets1000.valueWeightedIndex       = getCumulRet(momentum1000.valueWeightedIndex      );
+cumulRets1000.valueWeightedShadow      = getCumulRet(momentum1000.valueWeightedShadow     );
 
 disp("progress... get cumulative returns ... done")
 disp(datestr(now, 'HH:MM:SS'));
 
-%{
-alphas = ...
-[
-getAlpha(momentum.mom, momentum.index);
-getAlpha(momentum.index, momentum.index);
-getAlpha(momentum.shadow, momentum.index);
-getAlpha(momentum.longonly, momentum.index);
-];
+stats = table();
 
-stds = ...
-    [
-std(removenan(momentum.mom));
-std(removenan(momentum.index));
-std(removenan(momentum.shadow));
-std(removenan(momentum.longonly));
-];
+riskFree = 0.03;
+benchMark = momentum.valueWeightedIndex;
+stats.alpha = NaN(16,1);
+for i=1:8
+    stats.alpha(i) = portalpha(momentum{:, 5+i}, benchMark, riskFree);
+end
+for i=9:16
+    stats.alpha(i) = portalpha(momentum1000{:, i-3}, benchMark, riskFree);
+end
 
-means = ...
-    [
-mean(removenan(momentum.mom));
-mean(removenan(momentum.index));
-mean(removenan(momentum.shadow));
-mean(removenan(momentum.longonly));
-];
+stats.arithMean = NaN(16,1);
+for i=1:8
+    stats.arithMean(i) = mean(removenan(momentum{:, 5+i}));
+end
+for i=9:16
+    stats.arithMean(i) = mean(removenan(momentum1000{:, i-3}));
+end
 
+stats.STD = NaN(16,1);
+for i=1:8
+    stats.STD(i) = std(removenan(momentum{:, 5+i}));
+end
+for i=9:16
+    stats.STD(i) = std(removenan(momentum1000{:, i-3}));
+end
 
-rf_yearly = 0.0422;
-rf_monthly = rf_yearly/12;
+stats.sharpe = NaN(16,1);
+riskFreeMonthly = riskFree / 12;
+stats.sharpe = (stats.arithMean - riskFreeMonthly) ./ stats.STD;
 
-sharpes = (means - rf_monthly)./stds;
-%}
+% Add row names for stats table
+portfolioNames = {'EWMom', 'EWLongOnly', 'EWIndex', 'EWShadow', 'VWMom', 'VWLongOnly', 'VWIndex', 'VWShadow', 'EWMom1000', 'EWLongOnly1000', 'EWIndex1000', 'EWShadow1000', 'VWMom1000', 'VWLongOnly1000', 'VWIndex1000', 'VWShadow1000'};
+stats.Properties.RowNames = portfolioNames;
+
+% Delete unnecessary variables
+clear i isInvestible ix len this_month this_year winnerCutoff loserCutoff sorted_MC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit riskFree benchMark riskFreeMonthly portfolioNames
 
 disp("finished!")
 disp(datestr(now, 'HH:MM:SS'));

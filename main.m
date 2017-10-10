@@ -222,15 +222,20 @@ disp(datestr(now, 'HH:MM:SS'));
 
 stats = table();
 
-riskFree = 0.03;
+%riskFree = 0.03;
+riskFree = readtable("riskFree20042008.csv");
+riskFree.rates = riskFree.rates ./ 12 ./100; % annual -> monthly & percent -> decimal
+
 benchMark = momentum.valueWeightedIndex;
 stats.alpha = NaN(16,1);
+
 for i=1:8
-    stats.alpha(i) = portalpha(momentum{:, 5+i}, benchMark, riskFree);
+    stats.alpha(i) = portalpha(momentum{:, 5+i}, benchMark, riskFree.rates);
 end
 for i=9:16
-    stats.alpha(i) = portalpha(momentum1000{:, i-3}, benchMark, riskFree);
+    stats.alpha(i) = portalpha(momentum1000{:, i-3}, benchMark, riskFree.rates);
 end
+stats.alpha = stats.alpha * 12; % annulize alpha
 
 stats.arithMean = NaN(16,1);
 for i=1:8
@@ -248,16 +253,15 @@ for i=9:16
     stats.STD(i) = std(removenan(momentum1000{:, i-3}));
 end
 
-stats.sharpe = NaN(16,1);
-riskFreeMonthly = riskFree / 12;
-stats.sharpe = (stats.arithMean - riskFreeMonthly) ./ stats.STD;
+stats.sharpe = (stats.arithMean - mean(riskFree.rates)) ./ stats.STD;
+stats.sharpe = stats.sharpe * sqrt(12); % annualize sharpe
 
 % Add row names for stats table
 portfolioNames = {'EWMom', 'EWLongOnly', 'EWIndex', 'EWShadow', 'VWMom', 'VWLongOnly', 'VWIndex', 'VWShadow', 'EWMom1000', 'EWLongOnly1000', 'EWIndex1000', 'EWShadow1000', 'VWMom1000', 'VWLongOnly1000', 'VWIndex1000', 'VWShadow1000'};
 stats.Properties.RowNames = portfolioNames;
 
 % Delete unnecessary variables
-clear i isInvestible ix len thisMonth thisYear winnerCutoff loserCutoff sortedMC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit riskFree benchMark riskFreeMonthly portfolioNames
+% clear i isInvestible ix len thisMonth thisYear winnerCutoff loserCutoff sortedMC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit benchMark riskFreeMonthly portfolioNames
 
 disp("finished!")
 disp(datestr(now, 'HH:MM:SS'));

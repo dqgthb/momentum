@@ -345,11 +345,16 @@ portCumulRets = array2table([cumulRets{:, 4:11}, cumulRets1000{:, 4:11}]);
 for i=1:4
     for j=1:4
         subplot(2,2,i)
-        plot(cumulRets.datenum, portCumulRets{:,j+4*(i-1)});
+        p = plot(cumulRets.datenum, portCumulRets{:,j+4*(i-1)});
+        p.LineWidth = 3;
+        
         datetick('x','yyyy-mm-dd');
         hold on;
+        %set(gca,'FontSize',20,'fontWeight','bold')
+        %set(findall(gcf,'type','text'),'FontSize',20,'fontWeight','bold')
     end
-    legend(portfolioNames((i-1)*4+1:(i-1)*4+4));
+    l = legend(portfolioNames((i-1)*4+1:(i-1)*4+4));
+    l.FontSize = 15;
 end
 
 % Delete unnecessary variables

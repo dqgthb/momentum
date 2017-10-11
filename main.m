@@ -35,8 +35,44 @@
 %           * getCumulRet.m (explained above)
 %           * valueWeight.m (explained above)
 %           * getMomentum.m : a function used to achieve momentum of a stock at a given date.
+%           * removeNan.m : a function used to remove NaN in vectors. Useful when calculating mean and standard deviation.
+% 16 Portfolios:
+% +--------------------------------+----------------+-------------------+----------------+
+% | Market Cap Limit               | Weight         | Index Name        | Abbrev.        |
+% +--------------------------------+----------------+-------------------+----------------+
+% | No Limit Market Capitalizaiton | Equal weighted | momentum          | EWMom          |
+% +                                +                +-------------------+----------------+
+% |                                |                | Momentum LongOnly | EWLongOnly     |
+% +                                +                +-------------------+----------------+
+% |                                |                | Index             | EWIndex        |
+% +                                +                +-------------------+----------------+
+% |                                |                | Shadow            | EWShadow       |
+% +                                +----------------+-------------------+----------------+
+% |                                | Value Weighted | Momentum          | VMMom          |
+% +                                +                +-------------------+----------------+
+% |                                |                | Momentum LongOnly | VMLongOnly     |
+% +                                +                +-------------------+----------------+
+% |                                |                | Index             | VMIndex        |
+% +                                +                +-------------------+----------------+
+% |                                |                | Shadow            | VMShadow       |
+% +--------------------------------+----------------+-------------------+----------------+
+% | Top 1000 Market Cap Firms Only | Equal Weighted | Momentum          | EWMom1000      |
+% +                                +----------------+-------------------+----------------+
+% |                                |                | Momentum LongOnly | EWLongOnly1000 |
+% +                                +                +-------------------+----------------+
+% |                                |                | Index             | EWIndex1000    |
+% +                                +                +-------------------+----------------+
+% |                                |                | Shadow            | EWShadow1000   |
+% +                                +----------------+-------------------+----------------+
+% |                                | Value Weighted | Momentum          | VMMom1000      |
+% +                                +                +-------------------+----------------+
+% |                                |                | Momentum LongOnly | VMLongOnly1000 |
+% +                                +                +-------------------+----------------+
+% |                                |                | Index             | VMIndex1000    |
+% +                                +                +-------------------+----------------+
+% |                                |                | Shadow            | VMShadow1000   |
+% +--------------------------------+----------------+-------------------+----------------+
 %
-
 disp("Program begins!")
 disp(datestr(now, 'HH:MM:SS')); % displays time
 
@@ -303,12 +339,9 @@ stats.sharpe = stats.sharpe * sqrt(12); % annualize sharpe
 portfolioNames = {'EWMom', 'EWLongOnly', 'EWIndex', 'EWShadow', 'VWMom', 'VWLongOnly', 'VWIndex', 'VWShadow', 'EWMom1000', 'EWLongOnly1000', 'EWIndex1000', 'EWShadow1000', 'VWMom1000', 'VWLongOnly1000', 'VWIndex1000', 'VWShadow1000'};
 stats.Properties.RowNames = portfolioNames;
 
-% Delete unnecessary variables
-clear i isInvestible ix len thisMonth thisYear winnerCutoff loserCutoff sortedMC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit benchMark portfolioNames riskFree
 
 % create a 2x2 subplots with 4 portfolios plotted in each subplots.
 portCumulRets = array2table([cumulRets{:, 4:11}, cumulRets1000{:, 4:11}]);
-portCumulRets.Properties.VariableNames = portfolioNames;
 for i=1:4
     for j=1:4
         subplot(2,2,i)
@@ -318,6 +351,9 @@ for i=1:4
     end
     legend(portfolioNames((i-1)*4+1:(i-1)*4+4));
 end
+
+% Delete unnecessary variables
+clear i isInvestible ix len thisMonth thisYear winnerCutoff loserCutoff sortedMC losers winners investibles losersEWR winnersEWR losersVWR winnersVWR investiblesEWR investiblesVWR MCCutoff firmNumberLimit benchMark portfolioNames riskFree
 
 disp("Finished!")
 disp(datestr(now, 'HH:MM:SS'));

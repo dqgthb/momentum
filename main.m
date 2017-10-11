@@ -32,6 +32,7 @@
 
 % List of other files used:
 %           * crspWithMomentum.mat (explained above)
+%           * riskFree20042008.csv - csv file containing monthly risk free rates used for calculating sharpe and alpha.
 %           * getCumulRet.m (explained above)
 %           * valueWeight.m (explained above)
 %           * getMomentum.m : a function used to achieve momentum of a stock at a given date.
